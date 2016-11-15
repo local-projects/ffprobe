@@ -5,28 +5,48 @@ Python wrapper for ffprobe command line tool. ffprobe must exist in the path.
 """
 
 
-
-version='0.1'
+version='0.6'
 
 import subprocess
 import re
 import sys
 import os
+import pipes
 
 class FFProbe:
 	"""
 	FFProbe wraps the ffprobe command and pulls the data into an object form::
 		metadata=FFProbe('multimedia-file.mov')
 	"""
+	ffprobe_bin = "ffprobe"
+
 	def __init__(self,video_file):
 		self.video_file=video_file
+		# Due to paths system paths not being absolutely identifiable, need
+		# to look in a couple of different places
 		try:
 			with open(os.devnull, 'w') as tempf:
-				subprocess.check_call(["ffprobe","-h"],stdout=tempf,stderr=tempf)
+				self.ffprobe_bin = "ffprobe"
+				subprocess.check_call([self.ffprobe_bin,"-h"],stdout=tempf,stderr=tempf)
 		except:
-			raise IOError('ffprobe not found.')			
+			if sys.platform in [ "linux", "linux2", "darwin"]:
+				# posix may have things installed in /usr/local/bin which is not in default system path
+				try:
+					with open(os.devnull, 'w') as tempf:
+						self.ffprobe_bin = "/usr/local/bin/ffprobe"
+						subprocess.check_call([self.ffprobe_bin,"-h"],stdout=tempf,stderr=tempf)
+				except:
+					raise IOError('/usr/local/bin/ffprobe not found.')			
+			else: 
+				raise IOError('ffprobe not found.')			
+
 		if os.path.isfile(video_file):
-			p = subprocess.Popen(["ffprobe","-show_streams",self.video_file],stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
+			if str(sys.platform)=='windows':
+				cmd=[self.ffprobe_bin,"-show_streams",self.video_file]
+			else:
+				cmd=[self.ffprobe_bin + " -show_streams " + pipes.quote(self.video_file)]
+
+			p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
 			self.format=None
 			self.created=None
 			self.duration=None
@@ -204,4 +224,6 @@ class FFStream:
 		return b
 			
 if __name__ == '__main__':
-	print "Module ffprobe"
+	ffp = FFProbe("/Users/sundar/Downloads/out2.mp4")
+	print("Module ffprobe running from %s" % ffp.ffprobe_bin)
+

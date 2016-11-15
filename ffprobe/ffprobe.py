@@ -18,30 +18,30 @@ class FFProbe:
 	FFProbe wraps the ffprobe command and pulls the data into an object form::
 		metadata=FFProbe('multimedia-file.mov')
 	"""
-    ffprobe_bin = "ffprobe"
+	ffprobe_bin = "ffprobe"
 
 	def __init__(self,video_file):
 		self.video_file=video_file
-        # Due to paths system paths not being absolutely identifiable, need
-        # to look in a couple of different places
+		# Due to paths system paths not being absolutely identifiable, need
+		# to look in a couple of different places
 		try:
 			with open(os.devnull, 'w') as tempf:
-                self.ffprobe_bin = "ffprobe"
+				self.ffprobe_bin = "ffprobe"
 				subprocess.check_call([self.ffprobe_bin,"-h"],stdout=tempf,stderr=tempf)
 		except:
-			if sys._platform in [ "linux", "linux2", "darwin"]:
+			if sys.platform in [ "linux", "linux2", "darwin"]:
 				# posix may have things installed in /usr/local/bin which is not in default system path
 				try:
 					with open(os.devnull, 'w') as tempf:
-                        self.ffprobe_bin = "/usr/local/bin/ffprobe"
+						self.ffprobe_bin = "/usr/local/bin/ffprobe"
 						subprocess.check_call([self.ffprobe_bin,"-h"],stdout=tempf,stderr=tempf)
 				except:
 					raise IOError('/usr/local/bin/ffprobe not found.')			
 			else: 
-			    raise IOError('ffprobe not found.')			
+				raise IOError('ffprobe not found.')			
 
 		if os.path.isfile(video_file):
-			if str(platform.system())=='Windows':
+			if str(sys.platform)=='windows':
 				cmd=[self.ffprobe_bin,"-show_streams",self.video_file]
 			else:
 				cmd=[self.ffprobe_bin + " -show_streams " + pipes.quote(self.video_file)]
@@ -224,4 +224,6 @@ class FFStream:
 		return b
 			
 if __name__ == '__main__':
-	print "Module ffprobe"
+	ffp = FFProbe("/Users/sundar/Downloads/out2.mp4")
+	print("Module ffprobe running from %s" % ffp.ffprobe_bin)
+
