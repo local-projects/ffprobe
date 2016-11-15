@@ -18,29 +18,33 @@ class FFProbe:
 	FFProbe wraps the ffprobe command and pulls the data into an object form::
 		metadata=FFProbe('multimedia-file.mov')
 	"""
+    ffprobe_bin = "ffprobe"
+
 	def __init__(self,video_file):
 		self.video_file=video_file
         # Due to paths system paths not being absolutely identifiable, need
         # to look in a couple of different places
 		try:
 			with open(os.devnull, 'w') as tempf:
-				subprocess.check_call(["ffprobe","-h"],stdout=tempf,stderr=tempf)
+                self.ffprobe_bin = "ffprobe"
+				subprocess.check_call([self.ffprobe_bin,"-h"],stdout=tempf,stderr=tempf)
 		except:
 			if sys._platform in [ "linux", "linux2", "darwin"]:
 				# posix may have things installed in /usr/local/bin which is not in default system path
 				try:
 					with open(os.devnull, 'w') as tempf:
-						subprocess.check_call(["/usr/local/bin/ffprobe","-h"],stdout=tempf,stderr=tempf)
+                        self.ffprobe_bin = "/usr/local/bin/ffprobe"
+						subprocess.check_call([self.ffprobe_bin,"-h"],stdout=tempf,stderr=tempf)
 				except:
-					raise IOError('ffprobe not found.')			
+					raise IOError('/usr/local/bin/ffprobe not found.')			
 			else: 
 			    raise IOError('ffprobe not found.')			
 
 		if os.path.isfile(video_file):
 			if str(platform.system())=='Windows':
-				cmd=["ffprobe","-show_streams",self.video_file]
+				cmd=[self.ffprobe_bin,"-show_streams",self.video_file]
 			else:
-				cmd=["ffprobe -show_streams "+pipes.quote(self.video_file)]
+				cmd=[self.ffprobe_bin + " -show_streams " + pipes.quote(self.video_file)]
 
 			p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
 			self.format=None
