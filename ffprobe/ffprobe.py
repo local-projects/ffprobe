@@ -5,8 +5,7 @@ Python wrapper for ffprobe command line tool. ffprobe must exist in the path.
 """
 
 
-
-version='0.1'
+version='0.6'
 
 import subprocess
 import re
@@ -21,11 +20,22 @@ class FFProbe:
 	"""
 	def __init__(self,video_file):
 		self.video_file=video_file
+        # Due to paths system paths not being absolutely identifiable, need
+        # to look in a couple of different places
 		try:
 			with open(os.devnull, 'w') as tempf:
 				subprocess.check_call(["ffprobe","-h"],stdout=tempf,stderr=tempf)
 		except:
-			raise IOError('ffprobe not found.')			
+			if sys._platform in [ "linux", "linux2", "darwin"]:
+				# posix may have things installed in /usr/local/bin which is not in default system path
+				try:
+					with open(os.devnull, 'w') as tempf:
+						subprocess.check_call(["/usr/local/bin/ffprobe","-h"],stdout=tempf,stderr=tempf)
+				except:
+					raise IOError('ffprobe not found.')			
+			else: 
+			    raise IOError('ffprobe not found.')			
+
 		if os.path.isfile(video_file):
 			if str(platform.system())=='Windows':
 				cmd=["ffprobe","-show_streams",self.video_file]
